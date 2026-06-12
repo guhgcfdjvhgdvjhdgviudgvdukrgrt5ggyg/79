@@ -1,0 +1,172 @@
+import { Feather } from "@expo/vector-icons";
+import { Image } from "expo-image";
+import React from "react";
+import { StyleSheet, Text, View } from "react-native";
+import { useColors } from "@/hooks/useColors";
+import { timeAgo } from "@/lib/timeAgo";
+import type { ChatMessage } from "@/types";
+import { RoleBadge } from "./RoleBadge";
+
+interface Props {
+  message: ChatMessage;
+  isOwn: boolean;
+  showSender?: boolean;
+  online?: boolean;
+}
+
+export function ChatBubble({ message, isOwn, showSender = true, online }: Props) {
+  const colors = useColors();
+
+  const now = Date.now();
+  const canBeSeen = isOwn && now - message.createdAt > 3000;
+
+  return (
+    <View style={[styles.row, isOwn && styles.rowOwn]}>
+      {!isOwn && (
+        <View
+          style={[styles.avatar, { backgroundColor: colors.primary, borderRadius: 16 }]}
+        >
+          {message.senderAvatar ? (
+            <Image source={{ uri: message.senderAvatar }} style={styles.avatarImg} />
+          ) : (
+            <Text style={styles.avatarLetter}>
+              {message.senderName[0]?.toUpperCase()}
+            </Text>
+          )}
+        </View>
+      )}
+      <View style={[styles.bubbleGroup, isOwn && styles.bubbleGroupOwn]}>
+        {!isOwn && showSender && (
+          <View style={styles.senderRow}>
+            <Text style={[styles.senderName, { color: colors.foreground }]}>
+              {message.senderName}
+            </Text>
+            {online && <View style={[styles.onlineDot, { backgroundColor: colors.success }]} />}
+            <RoleBadge role={message.senderRole} small />
+          </View>
+        )}
+        <View
+          style={[
+            styles.bubble,
+            {
+              backgroundColor: isOwn ? colors.primary : colors.card,
+              borderColor: colors.border,
+              borderRadius: colors.radius,
+            },
+          ]}
+        >
+          {message.imageUrl && (
+            <Image
+              source={{ uri: message.imageUrl }}
+              style={[styles.image, { borderRadius: colors.radius }]}
+              contentFit="cover"
+            />
+          )}
+          {message.text ? (
+            <Text
+              style={[
+                styles.text,
+                { color: isOwn ? colors.primaryForeground : colors.foreground, marginTop: message.imageUrl ? 6 : 0 },
+              ]}
+            >
+              {message.text}
+            </Text>
+          ) : null}
+        </View>
+        <View style={styles.metaRow}>
+          <Text style={[styles.time, { color: colors.mutedForeground }]}>
+            {timeAgo(message.createdAt)}
+          </Text>
+          {canBeSeen && (
+            <View style={styles.seenRow}>
+              <Feather name="eye" size={10} color={colors.mutedForeground} />
+              <Text style={[styles.seenText, { color: colors.mutedForeground }]}>Seen</Text>
+            </View>
+          )}
+        </View>
+      </View>
+    </View>
+  );
+}
+
+const styles = StyleSheet.create({
+  row: {
+    flexDirection: "row",
+    marginVertical: 4,
+    marginHorizontal: 12,
+    gap: 8,
+    alignItems: "flex-end",
+  },
+  rowOwn: {
+    justifyContent: "flex-end",
+  },
+  avatar: {
+    width: 32,
+    height: 32,
+    justifyContent: "center",
+    alignItems: "center",
+    overflow: "hidden",
+  },
+  avatarImg: {
+    width: 32,
+    height: 32,
+  },
+  avatarLetter: {
+    color: "#fff",
+    fontWeight: "700",
+    fontSize: 12,
+  },
+  bubbleGroup: {
+    maxWidth: "72%",
+  },
+  bubbleGroupOwn: {
+    alignItems: "flex-end",
+  },
+  senderRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 5,
+    marginBottom: 3,
+    paddingLeft: 2,
+  },
+  senderName: {
+    fontSize: 12,
+    fontWeight: "600",
+  },
+  onlineDot: {
+    width: 6,
+    height: 6,
+    borderRadius: 3,
+  },
+  bubble: {
+    paddingHorizontal: 12,
+    paddingVertical: 8,
+    borderWidth: 0.5,
+  },
+  text: {
+    fontSize: 15,
+    lineHeight: 21,
+  },
+  image: {
+    width: "100%",
+    height: 160,
+  },
+  metaRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 6,
+    marginTop: 3,
+    paddingHorizontal: 2,
+  },
+  time: {
+    fontSize: 11,
+  },
+  seenRow: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 2,
+  },
+  seenText: {
+    fontSize: 10,
+  },
+});
